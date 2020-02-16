@@ -1,0 +1,19 @@
+{
+  "name": "officient",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "pretest": "docker-compose up",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dariusz Wietecha",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "fp-ts": "1.19.5",
+    "soap": "^0.30.0",
+    "sqs-consumer": "^5.4.0"
+  }
+}
