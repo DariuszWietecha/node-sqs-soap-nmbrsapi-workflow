@@ -1,0 +1,28 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <soap:Body>
+      <Absence_GetListResponse xmlns="https://api.nmbrs.nl/soap/v2.1/EmployeeService">
+         <Absence_GetListResult>
+            <Absence>
+               <AbsenceId>75136</AbsenceId>
+               <Percentage>100</Percentage>
+               <Start>2017-08-11T00:00:00</Start>
+               <RegistrationStartDate>2018-07-16T00:00:00</RegistrationStartDate>
+               <End xsi:nil="true"/>
+               <RegistrationEndDate xsi:nil="true"/>
+               <Dossier>Ziekte</Dossier>
+               <Dossiernr>62101</Dossiernr>
+            </Absence>
+            <Absence>
+               <AbsenceId>75103</AbsenceId>
+               <Percentage>80</Percentage>
+               <Start>2018-01-04T00:00:00</Start>
+               <RegistrationStartDate>2018-07-16T00:00:00</RegistrationStartDate>
+               <End>2018-01-09T00:00:00</End>
+               <RegistrationEndDate>2018-07-16T00:00:00</RegistrationEndDate>
+               <Dossier>Ziekte</Dossier>
+               <Dossiernr>62075</Dossiernr>
+            </Absence>
+         </Absence_GetListResult>
+      </Absence_GetListResponse>
+   </soap:Body>
+</soap:Envelope>

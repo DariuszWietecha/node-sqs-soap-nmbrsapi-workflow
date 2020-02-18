@@ -3,10 +3,22 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "mocha": {
+    "require": "ts-node/register",
+    "reporter": "spec",
+    "recursive": true,
+    "checkLeaks": true,
+    "exit": true,
+    "spec": "test/**/*.spec.ts"
+  },
   "scripts": {
     "build": "tsc",
-    "pretest": "docker-compose up",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "tsc",
+    "poststartLocalStack": "node create-queue",
+    "startLocalStack": "docker-compose -f ./test/docker-compose.yml up -d",
+    "stopLocalStack": "docker-compose -f ./test/docker-compose.yml down",
+    "start": "node index.js",
+    "test": "mocha"
   },
   "author": "Dariusz Wietecha",
   "license": "ISC",
@@ -15,5 +27,13 @@
     "fp-ts": "1.19.5",
     "soap": "^0.30.0",
     "sqs-consumer": "^5.4.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^7.0.1",
+    "mocha": "^7.0.1",
+    "nock": "^11.9.1",
+    "ts-node": "^8.6.2",
+    "tslint": "^6.0.0",
+    "typescript": "^3.7.5"
   }
 }

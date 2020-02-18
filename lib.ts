@@ -3,6 +3,11 @@ import { fromNullable } from "fp-ts/lib/Option";
 import * as fs from "fs";
 import * as path from "path";
 import * as api from "./api";
+import { IConfig } from "./config";
+
+export interface ISQSMessage {
+  Body: string;
+}
 
 interface IMessageObject {
   controller: string;
@@ -12,7 +17,7 @@ interface IMessageObject {
   user: string;
 }
 
-interface IEmployeData {
+export interface IEmployeData {
   group_id: string;
   source_app: string;
   source_app_internal_id: number;
@@ -31,7 +36,7 @@ interface ICalendar {
   };
 }
 
-export function getCalendar(absence: api.IAbsenceItem[]): ICalendar[] {
+function getCalendar(absence: api.IAbsenceItem[]): ICalendar[] {
   return absence.map((absenceItem) => {
     return {
       data: {
@@ -47,12 +52,12 @@ export function getCalendar(absence: api.IAbsenceItem[]): ICalendar[] {
   });
 }
 
-export function getDuration(absenceId: number, start: string, end?: string): number {
+function getDuration(absenceId: number, start: string, end?: string): number {
   return fromNullable(end)
     .map((e) => {
       const sDate = new Date(start);
       const eDate = new Date(e);
-      const diffMs = (sDate.getTime() - eDate.getTime());
+      const diffMs = (eDate.getTime() - sDate.getTime());
       return Math.round(diffMs / 60000);
     })
     .getOrElseL(() => {
@@ -62,7 +67,7 @@ export function getDuration(absenceId: number, start: string, end?: string): num
     });
 }
 
-export function getEmployeData(
+function getEmployeData(
   groupId: number, sourceApp: string, sourceAppInternalId: number, absence: api.IAbsenceItem[]): IEmployeData {
   return {
     group_id: groupId.toString(),
@@ -70,6 +75,39 @@ export function getEmployeData(
     source_app: sourceApp,
     source_app_internal_id: sourceAppInternalId,
   };
+}
+
+export async function handleMessage(config: IConfig, message: ISQSMessage): Promise<void> {
+  const messageData = messageToJSON(message.Body);
+  if (!isValidMessageData(messageData)) {
+    // tslint:disable-next-line:no-console
+    console.info(`Process stopped. Invalid message ${message.Body}`);
+    return;
+  }
+
+  const authHeader = {
+    "tns:AuthHeader": {
+      "tns:Token": messageData.pass,
+      "tns:Username": messageData.user,
+    },
+  };
+  const timestamp = Date.now();
+
+  const companiesIdsList = await api.getCompanyIdList(authHeader, config.api.CompanyServiceUrl);
+
+  await Promise.all(companiesIdsList.map(async (companyId) => {
+    const employeesIdsList = await api.getEmployeesIdsList(authHeader, config.api.EmployeeServiceUrl, companyId);
+    await Promise.all(employeesIdsList.map(async (employeId) => {
+      const employeAbsenceList =
+        await api.getEmployeAbsenceList(authHeader, config.api.EmployeeServiceUrl, employeId);
+
+      const employeData = getEmployeData(
+        messageData.group, messageData.source_app, employeId, employeAbsenceList);
+
+      const fileName = `${messageData.group}-${messageData.source_app}-${employeId}.json`;
+      await saveFile(`${__dirname}/../${config.outputDir}/${timestamp}/`, fileName, employeData);
+    }));
+  }));
 }
 
 export function isValidMessageData(messageData: IMessageObject): boolean {
@@ -91,9 +129,9 @@ export function messageToJSON(message: string): IMessageObject {
   return JSON.parse(step2);
 }
 
-export function saveFile(directoryPath: string, fileName: string, employeData: IEmployeData): Promise<void> {
+export async function saveFile(directoryPath: string, fileName: string, employeData: IEmployeData): Promise<void> {
   return new Promise((resolve, reject) => {
-    fs.mkdirSync(path.resolve(__dirname, directoryPath), { recursive: true });
+    fs.mkdirSync(directoryPath, { recursive: true });
     fs.writeFile(`${directoryPath}/${fileName}`, JSON.stringify(employeData),
       (err) => {
         if (err) {
@@ -113,7 +151,7 @@ export function sendMessage(sqs: AWS.SQS, queueUrl: string, MessageBody: string)
   sqs.sendMessage(params, (err, data) => {
     if (err) {
       // tslint:disable-next-line:no-console
-      console.info(err, err.stack);
+      console.error(err, err.stack);
     } else {
       // tslint:disable-next-line:no-console
       console.info(`Message:\n${params.MessageBody}\nsent:\n${JSON.stringify(data)}`);

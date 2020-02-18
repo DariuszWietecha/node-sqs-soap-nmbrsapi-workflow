@@ -49,7 +49,7 @@ export interface IAbsenceItem {
   RegistrationEndDate?: string;
 }
 
-export function getCompanyIdList(authHeader: IAuthHeader, CompanyServiceUrl: string): Promise<number[]> {
+export async function getCompanyIdList(authHeader: IAuthHeader, CompanyServiceUrl: string): Promise<number[]> {
   return new Promise((resolve: (companyIdList: number[]) => void, reject) => {
     soap.createClient(CompanyServiceUrl, async (error: Error, client: any) => {
       if (error) {
@@ -67,7 +67,7 @@ export function getCompanyIdList(authHeader: IAuthHeader, CompanyServiceUrl: str
   });
 }
 
-export function getEmployeesIdsList(
+export async function getEmployeesIdsList(
   authHeader: IAuthHeader, EmployeeServiceUrl: string, CompanyId: number): Promise<number[]> {
   return new Promise((resolve: (employeesList: number[]) => void, reject) => {
     soap.createClient(EmployeeServiceUrl, async (error: Error, client: any) => {
@@ -90,7 +90,7 @@ export function getEmployeesIdsList(
   });
 }
 
-export function getEmployeAbsenceList(
+export async function getEmployeAbsenceList(
   authHeader: IAuthHeader, EmployeeServiceUrl: string, EmployeeId: number): Promise<IAbsenceItem[]> {
   return new Promise((resolve: (absence: IAbsenceItem[]) => void, reject) => {
     // TODO move client above to avoid creating it two times

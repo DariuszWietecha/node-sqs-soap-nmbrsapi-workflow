@@ -1,0 +1,18 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <soap:Body>
+      <List_GetByCompanyResponse xmlns="https://api.nmbrs.nl/soap/v2.1/EmployeeService">
+         <List_GetByCompanyResult>
+            <Employee>
+               <Id>503293</Id>
+               <Number>1</Number>
+               <DisplayName>Jan de Vries</DisplayName>
+            </Employee>
+            <Employee>
+               <Id>503294</Id>
+               <Number>2</Number>
+               <DisplayName>Anton de Jong</DisplayName>
+            </Employee>
+         </List_GetByCompanyResult>
+      </List_GetByCompanyResponse>
+   </soap:Body>
+</soap:Envelope>

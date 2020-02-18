@@ -1,0 +1,14 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <soap:Body>
+      <List_GetAllResponse xmlns="https://api.nmbrs.nl/soap/v2.1/CompanyService">
+         <List_GetAllResult>
+            <Company>
+               <ID>54613</ID>
+               <Number>444445</Number>
+               <Name>DEMO B.V. 2</Name>
+               <LoonaangifteTijdvak>Month</LoonaangifteTijdvak>
+            </Company>
+         </List_GetAllResult>
+      </List_GetAllResponse>
+   </soap:Body>
+</soap:Envelope>
