@@ -12,7 +12,7 @@ Main used dependencies:
 - [nock](https://github.com/nock/nock)
 - [localstack](https://github.com/localstack/localstack)
 
-During the implemented was used node v10.16.3.
+During the implemented was used node v10.16.3. v10.12.0 version of node is required because `fs.mkdir` with `options.recursive` = true was used.
 
 ### Running the workflow
 1. Install dependencies and build using `npm install`.
@@ -30,9 +30,9 @@ During the implemented was used node v10.16.3.
 
 ### Using SQS on Local Stack and Nmbrs.nl API
 1. Copy `example.env` as `.env`.
-2. [Install Docker Compose](https://docs.docker.com/compose/install/), run the Docker and update `.env/SQS_URL` with `Docker default machine IP`:4576.
+2. [Install Docker Compose](https://docs.docker.com/compose/install/), run the Docker and update `.env/SQS_URL` with `Docker default machine IP`:4576, e.g. `SQS_URL=http://localhost:4576`
 3. Run the Local Stack and create a queue by command `npm run startLocalStack`.
-4. Uncomment below two lines in `index.ts`:
+4. Uncomment below two lines in `src/index.ts`:
 ```
 // const messageCommand = "{'source_app' => 'nmbrs', 'user' => 'michiel.crommelinck@officient.io', 'pass' => '2ed523df992646bf9bcfef66f75ef758', 'group' => 1234, 'controller' => 'importDaysoff',}";
 // lib.sendMessage(sqs, queueUrl, messageCommand);
