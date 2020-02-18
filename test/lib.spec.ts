@@ -1,11 +1,9 @@
 import assert = require("assert");
 import * as nock from "nock";
-import * as lib from "../lib";
-import * as config from "../config";
+import * as lib from "../src/lib";
+import * as config from "../src/config";
 import * as path from "path";
 import * as fs from "fs";
-// tslint:disable-next-line:no-var-requires
-const rimraf = require('rimraf');
 
 const message = {
   Body: "{'source_app' => 'nmbrs', 'user' => 'michiel.crommelinck@officient.io', 'pass' => '2ed523df992646bf9bcfef66f75ef758', 'group' => 1234, 'controller' => 'importDaysoff',}",

@@ -93,13 +93,15 @@ export async function handleMessage(config: IConfig, message: ISQSMessage): Prom
   };
   const timestamp = Date.now();
 
-  const companiesIdsList = await api.getCompanyIdList(authHeader, config.api.CompanyServiceUrl);
+  const companySoapClient = await api.createSoapClient(authHeader, config.api.CompanyServiceUrl) as api.ISoapCompanyServiceClient;
+  const companiesIdsList = await api.getCompanyIdList(companySoapClient);
 
+  const employeesSoapClient = await api.createSoapClient(authHeader, config.api.EmployeeServiceUrl) as api.ISoapEmployeeServiceClient;
   await Promise.all(companiesIdsList.map(async (companyId) => {
-    const employeesIdsList = await api.getEmployeesIdsList(authHeader, config.api.EmployeeServiceUrl, companyId);
+    const employeesIdsList = await api.getEmployeesIdsList(employeesSoapClient, companyId);
     await Promise.all(employeesIdsList.map(async (employeId) => {
       const employeAbsenceList =
-        await api.getEmployeAbsenceList(authHeader, config.api.EmployeeServiceUrl, employeId);
+        await api.getEmployeAbsenceList(employeesSoapClient, employeId);
 
       const employeData = getEmployeData(
         messageData.group, messageData.source_app, employeId, employeAbsenceList);

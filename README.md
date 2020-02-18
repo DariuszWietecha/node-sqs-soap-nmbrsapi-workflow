@@ -7,33 +7,41 @@ Workflow is triggered by SQS messages. During the execution, it retrieves an emp
 Main used dependencies:
 - [sqs-consumer](sqs-consumer)
 - [node-soap](https://github.com/vpulim/node-soap)
-- [typescript](https://www.typescriptlang.org/)
-- [Mocha](https://mochajs.org/)
+- [typescript](https://www.typescriptlang.org)
+- [mocha](https://mochajs.org)
+- [nock](https://github.com/nock/nock)
 - [localstack](https://github.com/localstack/localstack)
+
+During the implemented was used node v10.16.3.
 
 ### Running the workflow
 1. Install dependencies and build using `npm install`.
 2. Copy `example.env` as `.env` and update it according to a queue details which will be used to trigger the workflow.
 3. Run the workflow using `npm start`.
-3. Check logs and an ./output directory.
-4. To re-build the workflow use `npm run build`.
+3. Send message to the queue.
+4. Check logs and an ./output directory.
+5. The workflow can be stopped by Ctrl + z(Windows).
+6. To re-build the workflow use `npm run build`.
+
 
 ## Testing
-### Using Local Stack
+### Unit tests
+1. Run the Mocha by `npm test`.
+
+### Using SQS on Local Stack and Nmbrs.nl API
 1. Copy `example.env` as `.env`.
-2. [Install Docker Compose](https://docs.docker.com/compose/install/), run the Docker and update `.env/SQS_URL` with <Docker default machine IP>:4576.
+2. [Install Docker Compose](https://docs.docker.com/compose/install/), run the Docker and update `.env/SQS_URL` with `Docker default machine IP`:4576.
 3. Run the Local Stack and create a queue by command `npm run startLocalStack`.
 4. Uncomment below two lines in `index.ts`:
 ```
 // const messageCommand = "{'source_app' => 'nmbrs', 'user' => 'michiel.crommelinck@officient.io', 'pass' => '2ed523df992646bf9bcfef66f75ef758', 'group' => 1234, 'controller' => 'importDaysoff',}";
 // lib.sendMessage(sqs, queueUrl, messageCommand);
 ```
-5. Build the workflow by command `npm build`.
-6. Run workflow by command `npm run`.
+5. Build the workflow by command `npm run build`.
+6. Run workflow by command `npm start`.
 7. Check logs and an ./output folder.
-
-### Unit tests
-1. Run the Mocha by `npm run test`.
+8. The workflow can be stopped by Ctrl + z(Windows).
+9. To restore workflow to normal state revert changes from point 4 and re-build the code(point 5).
 
 ## Notes
 * .vscode directory was committed to the repository to let to debug the workflow execution and unit tests execution in VSCode.

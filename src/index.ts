@@ -9,7 +9,7 @@ interface ISQSMessage {
   Body: string;
 }
 // TODO: move ts to src
-const queueUrl = fromNullable(process.env.QUEUE_URL)
+const queueUrl = fromNullable(process.env.SQS_URL)
   .ap(fromNullable(process.env.QUEUE_NAME)
     .map((qN) => (qU) => `${qU}/queue/${qN}`))
   .getOrElseL(() => {
