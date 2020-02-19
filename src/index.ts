@@ -4,11 +4,8 @@ import * as AWS from "aws-sdk";
 import { config } from "./config";
 import * as lib from "./lib";
 import { fromNullable } from "fp-ts/lib/Option";
+import * as api from "./api";
 
-interface ISQSMessage {
-  Body: string;
-}
-// TODO: move ts to src
 const queueUrl = fromNullable(process.env.SQS_URL)
   .ap(fromNullable(process.env.QUEUE_NAME)
     .map((qN) => (qU) => `${qU}/queue/${qN}`))
@@ -24,33 +21,38 @@ AWS.config.update({
 
 const sqs = new AWS.SQS({ endpoint: queueUrl });
 
-const app = Consumer.create({
-  handleMessage: async (message: lib.ISQSMessage) => lib.handleMessage(config, message),
-  queueUrl,
-  sqs,
-});
+(async () => {
+  const companySoapClient = await api.createSoapClient(config.api.CompanyServiceUrl) as api.ISoapCompanyServiceClient;
+  const employeesSoapClient = await api.createSoapClient(config.api.EmployeeServiceUrl) as api.ISoapEmployeeServiceClient;
 
-app.on("message_processed", (message: lib.ISQSMessage) => {
-  // tslint:disable-next-line:no-console
-  console.info(`Message:\n${message.Body}\nwas processed.`);
-});
+  const app = Consumer.create({
+  handleMessage: async (message: lib.ISQSMessage) => lib.handleMessage(config, companySoapClient, employeesSoapClient, message),
+    queueUrl,
+    sqs,
+  });
 
-app.on("error", (err: Error) => {
-  // tslint:disable-next-line:no-console
-  console.error(err.message);
-});
+  app.on("message_processed", (message: lib.ISQSMessage) => {
+    // tslint:disable-next-line:no-console
+    console.info(`Message:\n${message.Body}\nwas processed.`);
+  });
 
-app.on("processing_error", (err: Error) => {
-  // tslint:disable-next-line:no-console
-  console.error(err.message);
-});
+  app.on("error", (err: Error) => {
+    // tslint:disable-next-line:no-console
+    console.error(err.message);
+  });
 
-app.on("timeout_error", (err: Error) => {
-  // tslint:disable-next-line:no-console
-  console.error(err.message);
-});
+  app.on("processing_error", (err: Error) => {
+    // tslint:disable-next-line:no-console
+    console.error(err.message);
+  });
 
-app.start();
+  app.on("timeout_error", (err: Error) => {
+    // tslint:disable-next-line:no-console
+    console.error(err.message);
+  });
+
+  app.start();
+})()
 
 // tslint:disable-next-line:max-line-length
 // const messageCommand = "{'source_app' => 'nmbrs', 'user' => 'michiel.crommelinck@officient.io', 'pass' => '2ed523df992646bf9bcfef66f75ef758', 'group' => 1234, 'controller' => 'importDaysoff',}";

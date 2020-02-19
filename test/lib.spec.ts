@@ -4,76 +4,80 @@ import * as lib from "../src/lib";
 import * as config from "../src/config";
 import * as path from "path";
 import * as fs from "fs";
-
-const message = {
-  Body: "{'source_app' => 'nmbrs', 'user' => 'michiel.crommelinck@officient.io', 'pass' => '2ed523df992646bf9bcfef66f75ef758', 'group' => 1234, 'controller' => 'importDaysoff',}",
-}
-
-const configMock: config.IConfig = {
-  api: {
-    CompanyServiceUrl: "https://api.nmbrs.nl/soap/v2.1/CompanyService.asmx?WSDL",
-    EmployeeServiceUrl: "https://api.nmbrs.nl/soap/v2.1/EmployeeService.asmx?WSDL",
-  },
-  sqs: {
-    region: "eu-west-1",
-  },
-  outputDir: "test/output",
-};
-
-const soapApiHost = "https://api.nmbrs.nl";
-const soapApiPathCS = "/soap/v2.1/CompanyService.asmx";
-const soapApiPathES = "/soap/v2.1/EmployeeService.asmx";
-
-const ServiceNock = nock(soapApiHost);
-const CompanyServiceNockListGetAll = nock(soapApiHost, {
-  reqheaders: {
-    soapaction: `"${soapApiHost}/soap/v2.1/CompanyService/List_GetAll"`
-  }
-});
-const EmployeeServiceNockListGetByCompany = nock(soapApiHost, {
-  reqheaders: {
-    soapaction: `"${soapApiHost}/soap/v2.1/EmployeeService/List_GetByCompany"`
-  }
-});
-const EmployeeServiceNockAbsenceGetList = nock(soapApiHost, {
-  reqheaders: {
-    soapaction: `"${soapApiHost}/soap/v2.1/EmployeeService/Absence_GetList"`
-  }
-});
-
-function emptyOutputDir(rootDirectoryPath: string): void {
-  const directoriesList = fs.readdirSync(rootDirectoryPath);
-  directoriesList.map((directory) => {
-    const directoryContent = fs.readdirSync(`${rootDirectoryPath}/${directory}`);
-    directoryContent.map((file) => {
-      fs.unlinkSync(`${rootDirectoryPath}/${directory}/${file}`);
-    })
-    fs.rmdirSync(`${rootDirectoryPath}/${directory}`);
-  })
-}
-
-after(() => {
-  nock.cleanAll();
-});
-
-afterEach(() => {
-  ServiceNock.done();
-  emptyOutputDir(`${__dirname}/output`);
-});
+import * as api from "../src/api";
 
 describe("lib", () => {
+  const message = {
+    Body: "{'source_app' => 'nmbrs', 'user' => 'michiel.crommelinck@officient.io', 'pass' => '2ed523df992646bf9bcfef66f75ef758', 'group' => 1234, 'controller' => 'importDaysoff',}",
+  }
+
+  const configMock: config.IConfig = {
+    api: {
+      CompanyServiceUrl: `${__dirname}/data/CompanyService-wsdl.xml`,
+      EmployeeServiceUrl: `${__dirname}/data/EmployeeService-wsdl.xml`,
+    },
+    sqs: {
+      region: "eu-west-1",
+    },
+    outputDir: "test/output",
+  };
+
+  let companySoapClient: api.ISoapCompanyServiceClient;
+  let employeesSoapClient: api.ISoapEmployeeServiceClient;
+
+  const soapApiHost = "https://api.nmbrs.nl";
+  const soapApiPathCS = "/soap/v2.1/CompanyService.asmx";
+  const soapApiPathES = "/soap/v2.1/EmployeeService.asmx";
+
+  const CompanyServiceNockListGetAll = nock(soapApiHost, {
+    reqheaders: {
+      soapaction: `"${soapApiHost}/soap/v2.1/CompanyService/List_GetAll"`
+    }
+  });
+  const EmployeeServiceNockListGetByCompany = nock(soapApiHost, {
+    reqheaders: {
+      soapaction: `"${soapApiHost}/soap/v2.1/EmployeeService/List_GetByCompany"`
+    }
+  });
+  const EmployeeServiceNockAbsenceGetList = nock(soapApiHost, {
+    reqheaders: {
+      soapaction: `"${soapApiHost}/soap/v2.1/EmployeeService/Absence_GetList"`
+    }
+  });
+
+  function emptyOutputDir(rootDirectoryPath: string): void {
+    const directoriesList = fs.readdirSync(rootDirectoryPath);
+    directoriesList.map((directory) => {
+      const directoryContent = fs.readdirSync(`${rootDirectoryPath}/${directory}`);
+      directoryContent.map((file) => {
+        fs.unlinkSync(`${rootDirectoryPath}/${directory}/${file}`);
+      })
+      fs.rmdirSync(`${rootDirectoryPath}/${directory}`);
+    })
+  }
+
+  before(async () => {
+    companySoapClient = await api.createSoapClient(configMock.api.CompanyServiceUrl) as api.ISoapCompanyServiceClient;
+    employeesSoapClient = await api.createSoapClient(configMock.api.EmployeeServiceUrl) as api.ISoapEmployeeServiceClient;
+  })
+
+  after(() => {
+    nock.cleanAll();
+  });
+
+  afterEach(() => {
+    CompanyServiceNockListGetAll.done();
+    EmployeeServiceNockListGetByCompany.done();
+    EmployeeServiceNockAbsenceGetList.done();
+    emptyOutputDir(`${__dirname}/output`);
+  });
+
   describe("handleMessage", () => {
     it("successful run, generate required output data", () => {
-      ServiceNock
-        .get(soapApiPathCS + "?WSDL")
-        .replyWithFile(200, path.join(__dirname, "./data/CompanyService-wsdl.xml"));
       CompanyServiceNockListGetAll
         .post(soapApiPathCS)
         .replyWithFile(200, path.join(__dirname, "./data/ListGetAll.xml"));
 
-      ServiceNock
-        .get(soapApiPathES + "?WSDL")
-        .replyWithFile(200, path.join(__dirname, "./data/EmployeeService-wsdl.xml"));
       EmployeeServiceNockListGetByCompany
         .post(soapApiPathES)
         .replyWithFile(200, path.join(__dirname, "./data/ListGetByCompany.xml"));
@@ -85,7 +89,7 @@ describe("lib", () => {
         .replyWithFile(200, path.join(__dirname, "./data/AbsenceGetList-503294.xml"));
 
 
-      return lib.handleMessage(configMock, message)
+      return lib.handleMessage(configMock, companySoapClient, employeesSoapClient, message)
         .then(() => {
           const directoryOutputContent = fs.readdirSync(`${__dirname}/output`);
 
@@ -132,6 +136,5 @@ describe("lib", () => {
           assert.fail("Promise rejected when it should have been resolved");
         });
     })
-      .timeout(100000);
   });
 });

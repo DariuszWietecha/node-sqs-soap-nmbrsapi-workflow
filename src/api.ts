@@ -72,15 +72,13 @@ interface IEmployeeId {
   EmployeeId: number;
 }
 
-export async function createSoapClient(
-  authHeader: IAuthHeader, serviceUrl: string): Promise<ISoapClient> {
+export async function createSoapClient(serviceUrl: string): Promise<ISoapClient> {
   return new Promise((resolve: (client: ISoapClient) => void, reject) => {
     soap.createClient(serviceUrl, async (error: Error, client: ISoapClient): Promise<void> => {
       if (error) {
         reject(error);
       }
 
-      client.addSoapHeader(authHeader);
       resolve(client);
     });
   });

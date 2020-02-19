@@ -1,7 +1,6 @@
 import * as AWS from "aws-sdk";
 import { fromNullable } from "fp-ts/lib/Option";
 import * as fs from "fs";
-import * as path from "path";
 import * as api from "./api";
 import { IConfig } from "./config";
 
@@ -77,7 +76,9 @@ function getEmployeData(
   };
 }
 
-export async function handleMessage(config: IConfig, message: ISQSMessage): Promise<void> {
+export async function handleMessage(
+  config: IConfig, companySoapClient: api.ISoapCompanyServiceClient, employeesSoapClient: api.ISoapEmployeeServiceClient,
+  message: ISQSMessage): Promise<void> {
   const messageData = messageToJSON(message.Body);
   if (!isValidMessageData(messageData)) {
     // tslint:disable-next-line:no-console
@@ -91,12 +92,13 @@ export async function handleMessage(config: IConfig, message: ISQSMessage): Prom
       "tns:Username": messageData.user,
     },
   };
+  companySoapClient.addSoapHeader(authHeader);
+  employeesSoapClient.addSoapHeader(authHeader);
+
   const timestamp = Date.now();
 
-  const companySoapClient = await api.createSoapClient(authHeader, config.api.CompanyServiceUrl) as api.ISoapCompanyServiceClient;
   const companiesIdsList = await api.getCompanyIdList(companySoapClient);
 
-  const employeesSoapClient = await api.createSoapClient(authHeader, config.api.EmployeeServiceUrl) as api.ISoapEmployeeServiceClient;
   await Promise.all(companiesIdsList.map(async (companyId) => {
     const employeesIdsList = await api.getEmployeesIdsList(employeesSoapClient, companyId);
     await Promise.all(employeesIdsList.map(async (employeId) => {
