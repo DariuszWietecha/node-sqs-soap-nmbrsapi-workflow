@@ -11,6 +11,10 @@
     "exit": true,
     "spec": "test/**/*.spec.ts"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:DariuszWietecha/node-sqs-soap-nmbrsapi-workflow.git"
+  },
   "scripts": {
     "build": "tsc",
     "postinstall": "tsc",
@@ -26,6 +30,7 @@
     "node": ">=v10.12.0"
   },
   "dependencies": {
+    "aws-sdk": "^2.630.0",
     "dotenv": "^8.2.0",
     "fp-ts": "1.19.5",
     "soap": "^0.30.0",
